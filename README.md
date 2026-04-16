@@ -26,7 +26,7 @@ Full-stack Trucking TMS: FastAPI + PostgreSQL + React + TypeScript
 | load_services | Lumper, Detention, Other services |
 | load_documents | Uploaded files (BOL, Confirmation) |
 | load_history | Audit log per load |
-| load_notes | Notes per load |
+| load_notes | Notes per load |z
 | settlements | Driver payroll settlements |
 | settlement_items | Load items in settlement |
 | settlement_payments | Payments against settlement |
