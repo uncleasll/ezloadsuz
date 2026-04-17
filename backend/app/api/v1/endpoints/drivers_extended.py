@@ -99,12 +99,16 @@ def _serialize_driver(d: Driver, db: Session) -> dict:
                 "doc_type": doc.doc_type.value if hasattr(doc.doc_type, "value") else doc.doc_type,
                 "status": doc.status,
                 "doc_number": doc.number,
+                "number": doc.number,
+                "state": doc.state,
                 "issue_date": str(doc.issue_date) if doc.issue_date else None,
                 "exp_date": str(doc.exp_date) if doc.exp_date else None,
                 "hire_date": str(doc.hire_date) if doc.hire_date else None,
                 "termination_date": str(doc.termination_date) if doc.termination_date else None,
                 "notes": doc.notes,
                 "filename": doc.filename,
+                "original_filename": doc.original_filename,
+                "file_path": doc.file_path,
                 "created_at": str(doc.created_at) if doc.created_at else None,
             }
             for doc in docs

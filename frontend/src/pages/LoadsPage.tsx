@@ -97,6 +97,13 @@ export default function LoadsPage() {
   const [showNewForm, setShowNewForm] = useState(false)
   const [showFilterDrawer, setShowFilterDrawer] = useState(false)
 
+  /* Bulk selection */
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [keepSelected, setKeepSelected] = useState(false)
+  const [bulkMenuOpen, setBulkMenuOpen] = useState(false)
+  const [bulkStatusMenu, setBulkStatusMenu] = useState<'billing' | 'load' | null>(null)
+  const bulkMenuRef = useRef<HTMLDivElement>(null)
+
   /* Dropdown menus */
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(false)
   const [actionMenuOpenId, setActionMenuOpenId] = useState<number | null>(null)
@@ -139,9 +146,18 @@ export default function LoadsPage() {
       if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
         setActionMenuOpenId(null)
       }
+      if (bulkMenuRef.current && !bulkMenuRef.current.contains(e.target as Node)) {
+        setBulkMenuOpen(false)
+        setBulkStatusMenu(null)
+      }
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setSettingsMenuOpen(false); setActionMenuOpenId(null) }
+      if (e.key === 'Escape') {
+        setSettingsMenuOpen(false)
+        setActionMenuOpenId(null)
+        setBulkMenuOpen(false)
+        setBulkStatusMenu(null)
+      }
     }
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
@@ -190,27 +206,90 @@ export default function LoadsPage() {
     fetchLoads({ ...activeFilters, ...filters })
   }
 
-  /* Row actions */
+  /* ── Checkbox helpers ── */
+  const allSelected = loads.length > 0 && loads.every(l => selectedIds.has(l.id))
+  const someSelected = loads.some(l => selectedIds.has(l.id))
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(loads.map(l => l.id)))
+    }
+  }
+
+  const toggleOne = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  /* ── Bulk actions ── */
+  const handleBulkDeleteLoads = async () => {
+    setBulkMenuOpen(false)
+    const ids = Array.from(selectedIds)
+    if (!window.confirm(`Delete ${ids.length} load(s)? This cannot be undone.`)) return
+    try {
+      await Promise.all(ids.map(id => loadsApi.delete(id)))
+      toast.success(`${ids.length} load(s) deleted`)
+      setSelectedIds(new Set())
+      fetchLoads({ ...activeFilters, ...filters })
+    } catch (e: unknown) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  const handleBulkChangeBillingStatus = async (status: string) => {
+    setBulkMenuOpen(false)
+    setBulkStatusMenu(null)
+    const ids = Array.from(selectedIds)
+    try {
+      await Promise.all(ids.map(id => loadsApi.update(id, { billing_status: status as any })))
+      toast.success(`${ids.length} load(s) updated to "${status}"`)
+      if (!keepSelected) setSelectedIds(new Set())
+      fetchLoads({ ...activeFilters, ...filters })
+    } catch (e: unknown) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  const handleBulkChangeLoadStatus = async (status: string) => {
+    setBulkMenuOpen(false)
+    setBulkStatusMenu(null)
+    const ids = Array.from(selectedIds)
+    try {
+      await Promise.all(ids.map(id => loadsApi.update(id, { status: status as any })))
+      toast.success(`${ids.length} load(s) status → "${status}"`)
+      if (!keepSelected) setSelectedIds(new Set())
+      fetchLoads({ ...activeFilters, ...filters })
+    } catch (e: unknown) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  /* ── Row actions ── */
   const handleEditLoad = (load: LoadListItem) => {
     setActionMenuOpenId(null)
     setSelectedLoad(load)
   }
- const handleCopyLoad = async (load: LoadListItem) => {
+  const handleCopyLoad = async (load: LoadListItem) => {
     setActionMenuOpenId(null)
     toast('Copy Load — not wired up yet')
   }
-
   const handleShowOnMap = (load: LoadListItem) => {
     setActionMenuOpenId(null)
     toast(`Show on map — load #${load.load_number}`)
   }
-
   const handleDeleteLoad = async (load: LoadListItem) => {
     setActionMenuOpenId(null)
     if (!window.confirm(`Delete load #${load.load_number}? This cannot be undone.`)) return
     try {
       await loadsApi.delete(load.id)
       toast.success(`Load #${load.load_number} deleted`)
+      setLoads(prev => prev.filter(l => l.id !== load.id))
       fetchLoads({ ...activeFilters, ...filters })
     } catch (e: unknown) {
       toast.error((e as Error).message)
@@ -379,8 +458,115 @@ export default function LoadsPage() {
           <thead className="sticky top-0 z-10">
             {/* Header row */}
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-1 py-2.5 text-center">
-                <input type="checkbox" className="w-3.5 h-3.5 rounded" />
+              {/* ── Checkbox with bulk menu ── */}
+              <th className="px-1 py-2.5 text-center relative">
+                <div ref={bulkMenuRef} className="inline-flex flex-col items-center">
+                  <input
+                    type="checkbox"
+                    className="w-3.5 h-3.5 rounded cursor-pointer"
+                    checked={allSelected}
+                    ref={el => { if (el) el.indeterminate = someSelected && !allSelected }}
+                    onChange={toggleAll}
+                  />
+                  {/* Bulk action dropdown trigger — only visible when something is selected */}
+                  {someSelected && (
+                    <button
+                      onClick={() => { setBulkMenuOpen(v => !v); setBulkStatusMenu(null) }}
+                      className="absolute left-0 top-full mt-0.5 flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-[11px] font-semibold rounded shadow-md whitespace-nowrap z-20 hover:bg-green-700"
+                      style={{ minWidth: 110 }}
+                    >
+                      <span>{selectedIds.size} selected</span>
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                  )}
+
+                  {/* Bulk menu dropdown */}
+                  {bulkMenuOpen && someSelected && (
+                    <div className="absolute left-0 top-full mt-7 w-52 bg-white border border-gray-200 rounded-md shadow-xl z-30 py-1">
+                      {/* Keep selected toggle */}
+                      <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100">
+                        <span className="text-xs text-gray-600">Keep selected loads</span>
+                        <button
+                          onClick={() => setKeepSelected(v => !v)}
+                          className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${keepSelected ? 'bg-green-500' : 'bg-gray-200'}`}
+                        >
+                          <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow ${keepSelected ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                        </button>
+                      </div>
+
+                      {/* Change Billing Status */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setBulkStatusMenu(v => v === 'billing' ? null : 'billing')}
+                          className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                        >
+                          <span>Change Billing Status</span>
+                          <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        {bulkStatusMenu === 'billing' && (
+                          <div className="absolute left-full top-0 ml-1 w-44 bg-white border border-gray-200 rounded-md shadow-xl z-40 py-1">
+                            {['Pending','Canceled','BOL received','Invoiced','Sent to factoring','Funded','Paid'].map(s => (
+                              <button key={s} onClick={() => handleBulkChangeBillingStatus(s)}
+                                className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Change Load Status */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setBulkStatusMenu(v => v === 'load' ? null : 'load')}
+                          className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                        >
+                          <span>Change Load Status</span>
+                          <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        {bulkStatusMenu === 'load' && (
+                          <div className="absolute left-full top-0 ml-1 w-36 bg-white border border-gray-200 rounded-md shadow-xl z-40 py-1">
+                            {['New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed'].map(s => (
+                              <button key={s} onClick={() => handleBulkChangeLoadStatus(s)}
+                                className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <button onClick={() => { setBulkMenuOpen(false); toast('Create Invoice — not wired up') }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                        Create Invoice
+                      </button>
+                      <button onClick={() => { setBulkMenuOpen(false); toast('Export to QB — not wired up') }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                        Export to QB
+                      </button>
+                      <button onClick={() => { setBulkMenuOpen(false); toast('Email Invoice to Broker — not wired up') }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                        Email Invoice to Broker
+                      </button>
+                      <button onClick={() => { setBulkMenuOpen(false); toast('Download Attachment — not wired up') }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                        Download Attachment
+                      </button>
+                      <button onClick={() => { setBulkMenuOpen(false); toast('Merge Documents — not wired up') }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                        Merge Documents
+                      </button>
+
+                      <div className="border-t border-gray-100 mt-1 pt-1">
+                        <button onClick={handleBulkDeleteLoads}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          Delete Loads
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </th>
               <th className="px-0 py-2.5" />
               <Th>Load</Th>
@@ -519,12 +705,18 @@ export default function LoadsPage() {
               const svcLabel = load.services[0]?.service_type
               const svcAmt = load.services.reduce((s, v) => s + v.invoice_amount, 0)
               const isActionOpen = actionMenuOpenId === load.id
+              const isChecked = selectedIds.has(load.id)
 
               return (
                 <tr key={load.id} onClick={() => setSelectedLoad(load)}
-                  className="hover:bg-blue-50/40 cursor-pointer transition-colors">
+                  className={`cursor-pointer transition-colors ${isChecked ? 'bg-green-50 hover:bg-green-100/60' : 'hover:bg-blue-50/40'}`}>
                   <td className="px-1 py-2 text-center" onClick={e => e.stopPropagation()}>
-                    <input type="checkbox" className="w-3.5 h-3.5 rounded" />
+                    <input
+                      type="checkbox"
+                      className="w-3.5 h-3.5 rounded cursor-pointer"
+                      checked={isChecked}
+                      onChange={() => toggleOne(load.id)}
+                    />
                   </td>
                   <td className="px-0 py-2">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" />
