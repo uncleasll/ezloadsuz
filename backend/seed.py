@@ -30,7 +30,6 @@ from app.models.models import (
 )
 from app.services.auth_service import hash_password, create_user as _create_user
 
-Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
 try:
