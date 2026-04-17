@@ -17,15 +17,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create enums only if they don't exist
-    op.execute("DO $$ BEGIN CREATE TYPE loadstatus AS ENUM ('New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE billingstatus AS ENUM ('Pending','Canceled','BOL received','Invoiced','Sent to factoring','Funded','Paid'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE stoptype AS ENUM ('pickup','delivery'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE servicetype AS ENUM ('Lumper','Detention','Other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE documenttype AS ENUM ('Confirmation','BOL','Other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE settlementstatus AS ENUM ('Preparing','Ready','Sent','Paid','Void'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE userrole AS ENUM ('admin','dispatcher','driver'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-    op.execute("DO $$ BEGIN CREATE TYPE driverdoctype AS ENUM ('application','cdl','medical_card','drug_test','mvr','ssn_card','employment_verification','other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
     # ── Enums ──────────────────────────────────────────────────────────────────
     load_status = postgresql.ENUM(
         'New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed',
@@ -127,8 +118,8 @@ def upgrade() -> None:
     op.create_table('loads',
         sa.Column('id',                  sa.Integer(),     nullable=False),
         sa.Column('load_number',         sa.Integer(),     nullable=False),
-        sa.Column('status',              sa.Enum('New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed', name='loadstatus'), nullable=False, server_default='New'),
-        sa.Column('billing_status',      sa.Enum('Pending','Canceled','BOL received','Invoiced','Sent to factoring','Funded','Paid', name='billingstatus'), nullable=False, server_default='Pending'),
+        sa.Column('status',              sa.Enum('New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed', name='loadstatus', create_type=False), nullable=False, server_default='New'),
+        sa.Column('billing_status',      sa.Enum('Pending','Canceled','BOL received','Invoiced','Sent to factoring','Funded','Paid', name='billingstatus', create_type=False), nullable=False, server_default='Pending'),
         sa.Column('load_date',           sa.Date(),        nullable=False),
         sa.Column('actual_delivery_date',sa.Date(),        nullable=True),
         sa.Column('rate',                sa.Float(),       nullable=True, server_default='0'),
@@ -160,7 +151,7 @@ def upgrade() -> None:
     op.create_table('load_stops',
         sa.Column('id',         sa.Integer(),   nullable=False),
         sa.Column('load_id',    sa.Integer(),   nullable=False),
-        sa.Column('stop_type',  sa.Enum('pickup','delivery', name='stoptype'), nullable=False),
+        sa.Column('stop_type',  sa.Enum('pickup','delivery', name='stoptype', create_type=False), nullable=False),
         sa.Column('stop_order', sa.Integer(),   nullable=False),
         sa.Column('city',       sa.String(100), nullable=True),
         sa.Column('state',      sa.String(50),  nullable=True),
@@ -178,7 +169,7 @@ def upgrade() -> None:
     op.create_table('load_services',
         sa.Column('id',              sa.Integer(),   nullable=False),
         sa.Column('load_id',         sa.Integer(),   nullable=False),
-        sa.Column('service_type',    sa.Enum('Lumper','Detention','Other', name='servicetype'), nullable=False),
+        sa.Column('service_type',    sa.Enum('Lumper','Detention','Other', name='servicetype', create_type=False), nullable=False),
         sa.Column('add_deduct',      sa.String(10),  nullable=True, server_default='Add'),
         sa.Column('invoice_amount',  sa.Float(),     nullable=True, server_default='0'),
         sa.Column('drivers_payable', sa.Float(),     nullable=True, server_default='0'),
@@ -193,7 +184,7 @@ def upgrade() -> None:
     op.create_table('load_documents',
         sa.Column('id',                sa.Integer(),    nullable=False),
         sa.Column('load_id',           sa.Integer(),    nullable=False),
-        sa.Column('document_type',     sa.Enum('Confirmation','BOL','Other', name='documenttype'), nullable=False),
+        sa.Column('document_type',     sa.Enum('Confirmation','BOL','Other', name='documenttype', create_type=False), nullable=False),
         sa.Column('filename',          sa.String(500),  nullable=False),
         sa.Column('original_filename', sa.String(500),  nullable=True),
         sa.Column('file_path',         sa.String(1000), nullable=True),
@@ -235,7 +226,7 @@ def upgrade() -> None:
         sa.Column('settlement_number', sa.Integer(),   nullable=False),
         sa.Column('driver_id',         sa.Integer(),   nullable=False),
         sa.Column('payable_to',        sa.String(200), nullable=True),
-        sa.Column('status',            sa.Enum('Preparing','Ready','Sent','Paid','Void', name='settlementstatus'), nullable=True, server_default='Preparing'),
+        sa.Column('status',            sa.Enum('Preparing','Ready','Sent','Paid','Void', name='settlementstatus', create_type=False), nullable=True, server_default='Preparing'),
         sa.Column('date',              sa.Date(),      nullable=False),
         sa.Column('settlement_total',  sa.Float(),     nullable=True, server_default='0'),
         sa.Column('balance_due',       sa.Float(),     nullable=True, server_default='0'),
@@ -307,7 +298,7 @@ def downgrade() -> None:
         sa.Column('name',              sa.String(200),  nullable=False),
         sa.Column('email',             sa.String(200),  nullable=False),
         sa.Column('hashed_password',   sa.String(500),  nullable=False),
-        sa.Column('role',              sa.Enum('admin','dispatcher','driver', name='userrole'), nullable=False, server_default='dispatcher'),
+        sa.Column('role',              sa.Enum('admin','dispatcher','driver', name='userrole', create_type=False), nullable=False, server_default='dispatcher'),
         sa.Column('is_active',         sa.Boolean(),    nullable=True, server_default='true'),
         sa.Column('dispatcher_id',     sa.Integer(),    nullable=True),
         sa.Column('created_at',        sa.DateTime(),   nullable=True, server_default=sa.text('now()')),
@@ -328,7 +319,7 @@ def downgrade() -> None:
     op.create_table('driver_documents',
         sa.Column('id',                sa.Integer(),    nullable=False),
         sa.Column('driver_id',         sa.Integer(),    nullable=False),
-        sa.Column('doc_type',          sa.Enum('application','cdl','medical_card','drug_test','mvr','ssn_card','employment_verification','other', name='driverdoctype'), nullable=False),
+        sa.Column('doc_type',          sa.Enum('application','cdl','medical_card','drug_test','mvr','ssn_card','employment_verification','other', name='driverdoctype', create_type=False), nullable=False),
         sa.Column('status',            sa.String(100),  nullable=True),
         sa.Column('number',            sa.String(100),  nullable=True),
         sa.Column('state',             sa.String(10),   nullable=True),
