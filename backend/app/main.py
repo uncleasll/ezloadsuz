@@ -31,6 +31,31 @@ app.include_router(api_router)
 # Serve uploaded files (driver documents, load documents, etc.)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
+@app.on_event("startup")
+def startup_fix_snapshots():
+    """Calculate missing driver pay snapshots for existing loads on startup."""
+    try:
+        from app.db.session import SessionLocal
+        from app.models.models import Load
+        from app.services.driver_pay_service import take_snapshot
+        db = SessionLocal()
+        loads = db.query(Load).filter(
+            Load.driver_id.isnot(None),
+            Load.is_active == True,
+            Load.drivers_payable_snapshot.is_(None)
+        ).all()
+        if loads:
+            for load in loads:
+                try:
+                    take_snapshot(db, load)
+                except Exception:
+                    pass
+            db.commit()
+        db.close()
+    except Exception:
+        pass
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "uzLoads TMS API", "version": "1.0.0"}

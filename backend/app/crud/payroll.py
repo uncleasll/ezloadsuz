@@ -163,7 +163,6 @@ def get_open_balances(
     ).filter(
         Load.is_active == True,
         Load.driver_id.isnot(None),
-        Load.drivers_payable_snapshot.isnot(None),
         Load.id.notin_(settled_load_ids),
     )
 
@@ -200,7 +199,7 @@ def get_open_balances(
                 'updated': None,
                 'load_ids': [],
             }
-        by_driver[did]['balance'] += (load.drivers_payable_snapshot or 0.0)
+        by_driver[did]['balance'] += (load.drivers_payable_snapshot if load.drivers_payable_snapshot is not None else (load.drivers_payable or 0.0))
         by_driver[did]['balance'] = round(by_driver[did]['balance'], 2)
         ldate = load.actual_delivery_date or load.load_date
         if ldate and (by_driver[did]['updated'] is None or ldate > by_driver[did]['updated']):

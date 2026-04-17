@@ -8,7 +8,8 @@ from datetime import date, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.db.session import SessionLocal, engine
+from app.db.session import SessionLocal
+from app.services.driver_pay_service import take_snapshot, engine
 from app.models.models import (
     Base,
     Driver,
@@ -30,15 +31,10 @@ from app.models.models import (
 )
 from app.services.auth_service import hash_password, create_user as _create_user
 
+Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
 try:
-    # ── Already seeded check ──────────────────────────────────────────────────
-    if db.query(Driver).first():
-        print("✓ Seed already applied, skipping.")
-        db.close()
-        exit(0)
-
     # ── Drivers ───────────────────────────────────────────────────────────────
     drivers = [
         Driver(name="Shohjahon Bobakulov", driver_type="Drv", phone="(240) 555-0101", email="shohjahon@silkroad.com", pay_rate_loaded=0.65, pay_rate_empty=0.30, is_active=True),
@@ -202,6 +198,8 @@ try:
             is_active=True,
         )
         db.add(load)
+        db.flush()
+        take_snapshot(db, load)
         db.flush()
 
         for i, (stype, city, state, zip_, sdate) in enumerate(cfg["stops"]):
