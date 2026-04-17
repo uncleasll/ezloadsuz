@@ -34,6 +34,12 @@ Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
 try:
+    # ── Already seeded check ──────────────────────────────────────────────────
+    if db.query(Driver).first():
+        print("✓ Seed already applied, skipping.")
+        db.close()
+        exit(0)
+
     # ── Drivers ───────────────────────────────────────────────────────────────
     drivers = [
         Driver(name="Shohjahon Bobakulov", driver_type="Drv", phone="(240) 555-0101", email="shohjahon@silkroad.com", pay_rate_loaded=0.65, pay_rate_empty=0.30, is_active=True),
