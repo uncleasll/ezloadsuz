@@ -195,39 +195,23 @@ export default function LoadsPage() {
     setActionMenuOpenId(null)
     setSelectedLoad(load)
   }
-  const handleCopyLoad = async (load: LoadListItem) => {
+ const handleCopyLoad = async (load: LoadListItem) => {
     setActionMenuOpenId(null)
-    try {
-      // @ts-expect-error — add `copy(id)` to loadsApi if not present
-      if (typeof loadsApi.copy === 'function') {
-        // @ts-expect-error
-        await loadsApi.copy(load.id)
-        toast.success(`Load #${load.load_number} copied`)
-        fetchLoads({ ...activeFilters, ...filters })
-      } else {
-        toast('Copy Load — wire up loadsApi.copy(id)')
-      }
-    } catch (e: unknown) {
-      toast.error((e as Error).message)
-    }
+    toast('Copy Load — not wired up yet')
   }
+
   const handleShowOnMap = (load: LoadListItem) => {
     setActionMenuOpenId(null)
     toast(`Show on map — load #${load.load_number}`)
   }
+
   const handleDeleteLoad = async (load: LoadListItem) => {
     setActionMenuOpenId(null)
     if (!window.confirm(`Delete load #${load.load_number}? This cannot be undone.`)) return
     try {
-      // @ts-expect-error — add `delete(id)` to loadsApi if not present
-      if (typeof loadsApi.delete === 'function') {
-        // @ts-expect-error
-        await loadsApi.delete(load.id)
-        toast.success(`Load #${load.load_number} deleted`)
-        fetchLoads({ ...activeFilters, ...filters })
-      } else {
-        toast.error('Delete Load — wire up loadsApi.delete(id)')
-      }
+      await loadsApi.delete(load.id)
+      toast.success(`Load #${load.load_number} deleted`)
+      fetchLoads({ ...activeFilters, ...filters })
     } catch (e: unknown) {
       toast.error((e as Error).message)
     }

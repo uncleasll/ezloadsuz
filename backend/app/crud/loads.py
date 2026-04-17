@@ -326,3 +326,12 @@ def delete_document(db: Session, doc_id: int) -> bool:
     db.delete(doc)
     db.commit()
     return True
+
+
+def delete_load(db: Session, load_id: int) -> bool:
+    db_load = db.query(Load).filter(Load.id == load_id).first()
+    if not db_load:
+        return False
+    db.delete(db_load)  # ← O'zgartir shu
+    db.commit()
+    return True
