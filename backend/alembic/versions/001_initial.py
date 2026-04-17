@@ -17,6 +17,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Create enums only if they don't exist
+    op.execute("DO $$ BEGIN CREATE TYPE loadstatus AS ENUM ('New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE billingstatus AS ENUM ('Pending','Canceled','BOL received','Invoiced','Sent to factoring','Funded','Paid'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE stoptype AS ENUM ('pickup','delivery'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE servicetype AS ENUM ('Lumper','Detention','Other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE documenttype AS ENUM ('Confirmation','BOL','Other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE settlementstatus AS ENUM ('Preparing','Ready','Sent','Paid','Void'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE userrole AS ENUM ('admin','dispatcher','driver'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE driverdoctype AS ENUM ('application','cdl','medical_card','drug_test','mvr','ssn_card','employment_verification','other'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
     # ── Enums ──────────────────────────────────────────────────────────────────
     load_status = postgresql.ENUM(
         'New','Canceled','TONU','Dispatched','En Route','Picked-up','Delivered','Closed',
