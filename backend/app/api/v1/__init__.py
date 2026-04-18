@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
-    loads, entities, payroll, reports, auth,
+    loads, entities, payroll, reports, auth, company,
     drivers_export,   # must be before driver_docs — avoids /{driver_id} swallowing /export/*
     driver_docs,
     drivers_extended,
@@ -17,3 +17,4 @@ api_router.include_router(drivers_export.router)   # before driver_docs
 api_router.include_router(driver_docs.router)
 api_router.include_router(drivers_extended.router)
 api_router.include_router(vendors.router)
+api_router.include_router(company.router)

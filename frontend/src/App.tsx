@@ -7,9 +7,11 @@ import DriversPage from '@/pages/DriversPage'
 import PayrollPage from '@/pages/PayrollPage'
 import ReportsPage from '@/pages/ReportsPage'
 import TrucksPage from '@/pages/TrucksPage'
+import TrailersPage from '@/pages/TrailersPage'
 import BrokersPage from '@/pages/BrokersPage'
 import VendorsPage from '@/pages/VendorsPage'
 import PlaceholderPage from '@/pages/PlaceholderPage'
+import MyCompanyPage from '@/pages/MyCompanyPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth()
@@ -36,8 +38,9 @@ export default function App() {
         <Route path="brokers" element={<BrokersPage />} />
         <Route path="vendors" element={<VendorsPage />} />
         <Route path="dispatch" element={<PlaceholderPage title="Dispatch Board" />} />
+        <Route path="my-company" element={<MyCompanyPage />} />
         <Route path="loadboards" element={<PlaceholderPage title="Loadboards" />} />
-        <Route path="trailers" element={<PlaceholderPage title="Trailers" />} />
+        <Route path="trailers" element={<TrailersPage />} />
         <Route path="fuel/*" element={<PlaceholderPage title="Fuel" />} />
         <Route path="accounting/*" element={<PlaceholderPage title="Accounting" />} />
         <Route path="tolls/*" element={<PlaceholderPage title="Tolls" />} />

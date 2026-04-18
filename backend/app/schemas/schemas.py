@@ -35,12 +35,36 @@ class DriverOut(DriverBase):
 
 # ─── Truck ────────────────────────────────────────────────────────────────────
 
+class TruckDocumentOut(BaseModel):
+    id: int
+    truck_id: int
+    doc_type: str
+    issue_date: Optional[date] = None
+    exp_date: Optional[date] = None
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    file_path: Optional[str] = None
+    original_filename: Optional[str] = None
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+
 class TruckBase(BaseModel):
     unit_number: str
     make: Optional[str] = None
     model: Optional[str] = None
     year: Optional[int] = None
     vin: Optional[str] = None
+    eld_provider: Optional[str] = None
+    eld_id: Optional[str] = None
+    ownership: Optional[str] = 'Owned'
+    driver_id: Optional[int] = None
+    plate: Optional[str] = None
+    plate_state: Optional[str] = None
+    purchase_date: Optional[date] = None
+    purchase_price: Optional[float] = None
+    notes: Optional[str] = None
     is_active: Optional[bool] = True
 
 
@@ -52,9 +76,19 @@ class TruckUpdate(TruckBase):
     unit_number: Optional[str] = None
 
 
+class DriverSimple(BaseModel):
+    id: int
+    name: str
+    driver_type: str
+    class Config:
+        from_attributes = True
+
+
 class TruckOut(TruckBase):
     id: int
     created_at: Optional[datetime] = None
+    driver: Optional[DriverSimple] = None
+    documents: List[TruckDocumentOut] = []
 
     class Config:
         from_attributes = True
@@ -62,10 +96,35 @@ class TruckOut(TruckBase):
 
 # ─── Trailer ──────────────────────────────────────────────────────────────────
 
+class TrailerDocumentOut(BaseModel):
+    id: int
+    trailer_id: int
+    doc_type: str
+    issue_date: Optional[date] = None
+    exp_date: Optional[date] = None
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    file_path: Optional[str] = None
+    original_filename: Optional[str] = None
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+
 class TrailerBase(BaseModel):
     unit_number: str
     trailer_type: Optional[str] = None
-    length: Optional[int] = None
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    vin: Optional[str] = None
+    ownership: Optional[str] = 'Owned'
+    driver_id: Optional[int] = None
+    plate: Optional[str] = None
+    plate_state: Optional[str] = None
+    purchase_date: Optional[date] = None
+    purchase_price: Optional[float] = None
+    notes: Optional[str] = None
     is_active: Optional[bool] = True
 
 
@@ -80,6 +139,8 @@ class TrailerUpdate(TrailerBase):
 class TrailerOut(TrailerBase):
     id: int
     created_at: Optional[datetime] = None
+    driver: Optional[DriverSimple] = None
+    documents: List[TrailerDocumentOut] = []
 
     class Config:
         from_attributes = True

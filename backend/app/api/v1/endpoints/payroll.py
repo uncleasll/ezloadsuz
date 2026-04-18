@@ -254,7 +254,7 @@ def download_settlement_pdf(settlement_id: int, db: Session = Depends(get_db)):
     ).filter(Settlement.id == settlement_id).first()
     if not s:
         raise HTTPException(404, "Settlement not found")
-    pdf = generate_settlement_pdf(s)
+    pdf = generate_settlement_pdf(s, db=db)
     driver_name = (s.driver.name if s.driver else "driver").replace(' ', '_')
     filename = f"driver_settlement_{s.settlement_number}_{driver_name}.pdf"
     return Response(pdf, media_type="application/pdf",

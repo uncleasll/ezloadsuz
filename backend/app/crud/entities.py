@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
-from app.models.models import Driver, Truck, Trailer, Broker, Dispatcher
+from app.models.models import Driver, Truck, Trailer, Broker, Dispatcher, TruckDocument, TrailerDocument
 from app.schemas.schemas import (
     DriverCreate, DriverUpdate, TruckCreate, TruckUpdate,
     TrailerCreate, TrailerUpdate, BrokerCreate, BrokerUpdate,
@@ -43,10 +43,51 @@ def update_driver(db: Session, driver_id: int, driver_in: DriverUpdate) -> Optio
 # ─── Trucks ───────────────────────────────────────────────────────────────────
 
 def get_trucks(db: Session, is_active: Optional[bool] = None) -> List[Truck]:
-    q = db.query(Truck)
+    q = db.query(Truck).options(joinedload(Truck.driver), joinedload(Truck.documents))
     if is_active is not None:
         q = q.filter(Truck.is_active == is_active)
     return q.order_by(Truck.unit_number).all()
+
+
+def get_truck(db: Session, truck_id: int):
+    return db.query(Truck).options(joinedload(Truck.driver), joinedload(Truck.documents)).filter(Truck.id == truck_id).first()
+
+
+def delete_truck(db: Session, truck_id: int) -> bool:
+    truck = db.query(Truck).filter(Truck.id == truck_id).first()
+    if not truck:
+        return False
+    truck.is_active = False
+    db.commit()
+    return True
+
+
+def add_truck_document(db: Session, truck_id: int, data: dict) -> TruckDocument:
+    doc = TruckDocument(truck_id=truck_id, **data)
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+def update_truck_document(db: Session, doc_id: int, data: dict):
+    doc = db.query(TruckDocument).filter(TruckDocument.id == doc_id).first()
+    if not doc:
+        return None
+    for k, v in data.items():
+        setattr(doc, k, v)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+def delete_truck_document(db: Session, doc_id: int) -> bool:
+    doc = db.query(TruckDocument).filter(TruckDocument.id == doc_id).first()
+    if not doc:
+        return False
+    db.delete(doc)
+    db.commit()
+    return True
 
 
 def create_truck(db: Session, truck_in: TruckCreate) -> Truck:
@@ -71,10 +112,51 @@ def update_truck(db: Session, truck_id: int, truck_in: TruckUpdate) -> Optional[
 # ─── Trailers ─────────────────────────────────────────────────────────────────
 
 def get_trailers(db: Session, is_active: Optional[bool] = None) -> List[Trailer]:
-    q = db.query(Trailer)
+    q = db.query(Trailer).options(joinedload(Trailer.driver), joinedload(Trailer.documents))
     if is_active is not None:
         q = q.filter(Trailer.is_active == is_active)
     return q.order_by(Trailer.unit_number).all()
+
+
+def get_trailer(db: Session, trailer_id: int):
+    return db.query(Trailer).options(joinedload(Trailer.driver), joinedload(Trailer.documents)).filter(Trailer.id == trailer_id).first()
+
+
+def delete_trailer(db: Session, trailer_id: int) -> bool:
+    trailer = db.query(Trailer).filter(Trailer.id == trailer_id).first()
+    if not trailer:
+        return False
+    trailer.is_active = False
+    db.commit()
+    return True
+
+
+def add_trailer_document(db: Session, trailer_id: int, data: dict) -> TrailerDocument:
+    doc = TrailerDocument(trailer_id=trailer_id, **data)
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+def update_trailer_document(db: Session, doc_id: int, data: dict):
+    doc = db.query(TrailerDocument).filter(TrailerDocument.id == doc_id).first()
+    if not doc:
+        return None
+    for k, v in data.items():
+        setattr(doc, k, v)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+def delete_trailer_document(db: Session, doc_id: int) -> bool:
+    doc = db.query(TrailerDocument).filter(TrailerDocument.id == doc_id).first()
+    if not doc:
+        return False
+    db.delete(doc)
+    db.commit()
+    return True
 
 
 def create_trailer(db: Session, trailer_in: TrailerCreate) -> Trailer:

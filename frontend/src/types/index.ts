@@ -33,21 +33,73 @@ export interface Driver {
   created_at?: string
 }
 
+export interface TruckDocument {
+  id: number
+  truck_id: number
+  doc_type: string
+  issue_date?: string
+  exp_date?: string
+  name?: string
+  notes?: string
+  file_path?: string
+  original_filename?: string
+  created_at?: string
+}
+
 export interface Truck {
   id: number
   unit_number: string
   make?: string
   model?: string
   year?: number
+  vin?: string
+  eld_provider?: string
+  eld_id?: string
+  ownership?: string
+  driver_id?: number
+  driver?: { id: number; name: string; driver_type: string }
+  plate?: string
+  plate_state?: string
+  purchase_date?: string
+  purchase_price?: number
+  notes?: string
   is_active: boolean
+  created_at?: string
+  documents?: TruckDocument[]
+}
+
+export interface TrailerDocument {
+  id: number
+  trailer_id: number
+  doc_type: string
+  issue_date?: string
+  exp_date?: string
+  name?: string
+  notes?: string
+  file_path?: string
+  original_filename?: string
+  created_at?: string
 }
 
 export interface Trailer {
   id: number
   unit_number: string
   trailer_type?: string
-  length?: number
+  make?: string
+  model?: string
+  year?: number
+  vin?: string
+  ownership?: string
+  driver_id?: number
+  driver?: { id: number; name: string; driver_type: string }
+  plate?: string
+  plate_state?: string
+  purchase_date?: string
+  purchase_price?: number
+  notes?: string
   is_active: boolean
+  created_at?: string
+  documents?: TrailerDocument[]
 }
 
 export interface Broker {

@@ -71,10 +71,21 @@ class Truck(Base):
     model = Column(String(100))
     year = Column(Integer)
     vin = Column(String(100))
+    eld_provider = Column(String(100))
+    eld_id = Column(String(100))
+    ownership = Column(String(50), default='Owned')
+    driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
+    plate = Column(String(50))
+    plate_state = Column(String(10))
+    purchase_date = Column(Date, nullable=True)
+    purchase_price = Column(Float, nullable=True)
+    notes = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
 
     loads = relationship("Load", back_populates="truck")
+    driver = relationship("Driver", foreign_keys=[driver_id])
+    documents = relationship("TruckDocument", back_populates="truck", cascade="all, delete-orphan")
 
 
 class Trailer(Base):
@@ -83,11 +94,78 @@ class Trailer(Base):
     id = Column(Integer, primary_key=True, index=True)
     unit_number = Column(String(50), nullable=False, unique=True)
     trailer_type = Column(String(100))
-    length = Column(Integer)
+    make = Column(String(100))
+    model = Column(String(100))
+    year = Column(Integer)
+    vin = Column(String(100))
+    ownership = Column(String(50), default='Owned')
+    driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
+    plate = Column(String(50))
+    plate_state = Column(String(10))
+    purchase_date = Column(Date, nullable=True)
+    purchase_price = Column(Float, nullable=True)
+    notes = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
 
     loads = relationship("Load", back_populates="trailer")
+    driver = relationship("Driver", foreign_keys=[driver_id])
+    documents = relationship("TrailerDocument", back_populates="trailer", cascade="all, delete-orphan")
+
+
+
+class TruckDocument(Base):
+    __tablename__ = "truck_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    truck_id = Column(Integer, ForeignKey("trucks.id"), nullable=False)
+    doc_type = Column(String(100), nullable=False)  # annual_inspection, registration, repairs, other
+    issue_date = Column(Date, nullable=True)
+    exp_date = Column(Date, nullable=True)
+    name = Column(String(200))
+    notes = Column(Text)
+    file_path = Column(String(500))
+    original_filename = Column(String(200))
+    created_at = Column(DateTime, server_default=func.now())
+
+    truck = relationship("Truck", back_populates="documents")
+
+
+class TrailerDocument(Base):
+    __tablename__ = "trailer_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trailer_id = Column(Integer, ForeignKey("trailers.id"), nullable=False)
+    doc_type = Column(String(100), nullable=False)
+    issue_date = Column(Date, nullable=True)
+    exp_date = Column(Date, nullable=True)
+    name = Column(String(200))
+    notes = Column(Text)
+    file_path = Column(String(500))
+    original_filename = Column(String(200))
+    created_at = Column(DateTime, server_default=func.now())
+
+    trailer = relationship("Trailer", back_populates="documents")
+
+
+
+class CompanySettings(Base):
+    __tablename__ = "company_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), default='My Company')
+    legal_name = Column(String(200))
+    mc_number = Column(String(50))
+    dot_number = Column(String(50))
+    address = Column(String(300))
+    city = Column(String(100))
+    state = Column(String(50))
+    zip_code = Column(String(20))
+    phone = Column(String(50))
+    email = Column(String(200))
+    website = Column(String(200))
+    logo_path = Column(String(500))
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class Broker(Base):

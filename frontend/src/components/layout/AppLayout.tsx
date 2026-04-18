@@ -260,7 +260,7 @@ export default function AppLayout() {
                 </div>
                 {[
                   { label: 'Billing', icon: <BillingIcon /> },
-                  { label: 'My Company', icon: <CompanyIcon /> },
+                  { label: 'My Company', icon: <CompanyIcon />, to: '/my-company' },
                   { label: 'My Profile', icon: <ProfileIcon /> },
                   { label: 'Settings', icon: <SettingsMenuIcon /> },
                   { label: 'Logout', icon: <LogoutIcon /> },

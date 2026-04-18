@@ -25,9 +25,31 @@ export const trucksApi = {
     const { data } = await client.get(`${V1}/trucks`, { params })
     return data
   },
+  get: async (id: number): Promise<Truck> => {
+    const { data } = await client.get(`${V1}/trucks/${id}`)
+    return data
+  },
   create: async (payload: Partial<Truck>): Promise<Truck> => {
     const { data } = await client.post(`${V1}/trucks`, payload)
     return data
+  },
+  update: async (id: number, payload: Partial<Truck>): Promise<Truck> => {
+    const { data } = await client.put(`${V1}/trucks/${id}`, payload)
+    return data
+  },
+  delete: async (id: number): Promise<void> => {
+    await client.delete(`${V1}/trucks/${id}`)
+  },
+  addDocument: async (truckId: number, payload: Record<string, unknown>) => {
+    const { data } = await client.post(`${V1}/trucks/${truckId}/documents`, payload)
+    return data
+  },
+  updateDocument: async (truckId: number, docId: number, payload: Record<string, unknown>) => {
+    const { data } = await client.put(`${V1}/trucks/${truckId}/documents/${docId}`, payload)
+    return data
+  },
+  deleteDocument: async (truckId: number, docId: number) => {
+    await client.delete(`${V1}/trucks/${truckId}/documents/${docId}`)
   },
 }
 
@@ -36,6 +58,32 @@ export const trailersApi = {
     const params = isActive !== undefined ? { is_active: isActive } : {}
     const { data } = await client.get(`${V1}/trailers`, { params })
     return data
+  },
+  get: async (id: number): Promise<Trailer> => {
+    const { data } = await client.get(`${V1}/trailers/${id}`)
+    return data
+  },
+  create: async (payload: Partial<Trailer>): Promise<Trailer> => {
+    const { data } = await client.post(`${V1}/trailers`, payload)
+    return data
+  },
+  update: async (id: number, payload: Partial<Trailer>): Promise<Trailer> => {
+    const { data } = await client.put(`${V1}/trailers/${id}`, payload)
+    return data
+  },
+  delete: async (id: number): Promise<void> => {
+    await client.delete(`${V1}/trailers/${id}`)
+  },
+  addDocument: async (trailerId: number, payload: Record<string, unknown>) => {
+    const { data } = await client.post(`${V1}/trailers/${trailerId}/documents`, payload)
+    return data
+  },
+  updateDocument: async (trailerId: number, docId: number, payload: Record<string, unknown>) => {
+    const { data } = await client.put(`${V1}/trailers/${trailerId}/documents/${docId}`, payload)
+    return data
+  },
+  deleteDocument: async (trailerId: number, docId: number) => {
+    await client.delete(`${V1}/trailers/${trailerId}/documents/${docId}`)
   },
 }
 

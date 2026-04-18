@@ -4,8 +4,8 @@ from typing import List, Optional
 from app.db.session import get_db
 from app.schemas.schemas import (
     DriverCreate, DriverUpdate, DriverOut,
-    TruckCreate, TruckUpdate, TruckOut,
-    TrailerCreate, TrailerUpdate, TrailerOut,
+    TruckCreate, TruckUpdate, TruckOut, TruckDocumentOut,
+    TrailerCreate, TrailerUpdate, TrailerOut, TrailerDocumentOut,
     BrokerCreate, BrokerUpdate, BrokerOut,
     DispatcherCreate, DispatcherUpdate, DispatcherOut
 )
@@ -46,12 +46,47 @@ def create_truck(truck_in: TruckCreate, db: Session = Depends(get_db)):
     return crud.create_truck(db, truck_in)
 
 
+@router.get("/trucks/{truck_id}", response_model=TruckOut)
+def get_truck(truck_id: int, db: Session = Depends(get_db)):
+    truck = crud.get_truck(db, truck_id)
+    if not truck:
+        raise HTTPException(404, "Truck not found")
+    return truck
+
+
 @router.put("/trucks/{truck_id}", response_model=TruckOut)
 def update_truck(truck_id: int, truck_in: TruckUpdate, db: Session = Depends(get_db)):
     truck = crud.update_truck(db, truck_id, truck_in)
     if not truck:
         raise HTTPException(404, "Truck not found")
     return truck
+
+
+@router.delete("/trucks/{truck_id}")
+def delete_truck(truck_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_truck(db, truck_id):
+        raise HTTPException(404, "Truck not found")
+    return {"message": "Truck deactivated"}
+
+
+@router.post("/trucks/{truck_id}/documents", response_model=TruckDocumentOut, status_code=201)
+def add_truck_document(truck_id: int, data: dict, db: Session = Depends(get_db)):
+    return crud.add_truck_document(db, truck_id, data)
+
+
+@router.put("/trucks/{truck_id}/documents/{doc_id}", response_model=TruckDocumentOut)
+def update_truck_document(truck_id: int, doc_id: int, data: dict, db: Session = Depends(get_db)):
+    doc = crud.update_truck_document(db, doc_id, data)
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    return doc
+
+
+@router.delete("/trucks/{truck_id}/documents/{doc_id}")
+def delete_truck_document(truck_id: int, doc_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_truck_document(db, doc_id):
+        raise HTTPException(404, "Document not found")
+    return {"message": "Deleted"}
 
 
 # ─── Trailers ─────────────────────────────────────────────────────────────────
@@ -66,12 +101,47 @@ def create_trailer(trailer_in: TrailerCreate, db: Session = Depends(get_db)):
     return crud.create_trailer(db, trailer_in)
 
 
+@router.get("/trailers/{trailer_id}", response_model=TrailerOut)
+def get_trailer(trailer_id: int, db: Session = Depends(get_db)):
+    trailer = crud.get_trailer(db, trailer_id)
+    if not trailer:
+        raise HTTPException(404, "Trailer not found")
+    return trailer
+
+
 @router.put("/trailers/{trailer_id}", response_model=TrailerOut)
 def update_trailer(trailer_id: int, trailer_in: TrailerUpdate, db: Session = Depends(get_db)):
     trailer = crud.update_trailer(db, trailer_id, trailer_in)
     if not trailer:
         raise HTTPException(404, "Trailer not found")
     return trailer
+
+
+@router.delete("/trailers/{trailer_id}")
+def delete_trailer(trailer_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_trailer(db, trailer_id):
+        raise HTTPException(404, "Trailer not found")
+    return {"message": "Trailer deactivated"}
+
+
+@router.post("/trailers/{trailer_id}/documents", response_model=TrailerDocumentOut, status_code=201)
+def add_trailer_document(trailer_id: int, data: dict, db: Session = Depends(get_db)):
+    return crud.add_trailer_document(db, trailer_id, data)
+
+
+@router.put("/trailers/{trailer_id}/documents/{doc_id}", response_model=TrailerDocumentOut)
+def update_trailer_document(trailer_id: int, doc_id: int, data: dict, db: Session = Depends(get_db)):
+    doc = crud.update_trailer_document(db, doc_id, data)
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    return doc
+
+
+@router.delete("/trailers/{trailer_id}/documents/{doc_id}")
+def delete_trailer_document(trailer_id: int, doc_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_trailer_document(db, doc_id):
+        raise HTTPException(404, "Document not found")
+    return {"message": "Deleted"}
 
 
 # ─── Brokers ──────────────────────────────────────────────────────────────────
