@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 interface NavItem {
   label: string
@@ -41,6 +41,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const navigate = useNavigate()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
 
@@ -267,7 +268,7 @@ export default function AppLayout() {
                 ].map(item => (
                   <button
                     key={item.label}
-                    onClick={() => setShowUserMenu(false)}
+                    onClick={() => { setShowUserMenu(false); if ((item as any).to) navigate((item as any).to) }}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                       padding: '9px 16px', fontSize: 12, color: '#374151',
